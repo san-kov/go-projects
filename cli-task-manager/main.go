@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Task struct {
@@ -47,7 +48,50 @@ func main() {
 		fmt.Printf("Added task %d: %s\n", len(tasks), text)
 	case "list":
 		printTasks(tasks)
+	case "done":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: task-manager add <text>")
+			return
+		}
+
+		id, err := strconv.Atoi(os.Args[2])
+
+		if err != nil {
+			fmt.Println("Id is not valid")
+			return
+		}
+
+		tasks = completeTask(tasks, id)
+
+		if err := saveTasks(tasks); err != nil {
+			fmt.Println("Failed to save tasks")
+			return
+		}
+
+		fmt.Printf("Completed task %d:\n", id)
+	case "delete":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: task-manager add <text>")
+			return
+		}
+
+		id, err := strconv.Atoi(os.Args[2])
+
+		if err != nil {
+			fmt.Println("Id is not valid")
+			return
+		}
+
+		tasks = deleteTask(tasks, id)
+
+		if err := saveTasks(tasks); err != nil {
+			fmt.Println("Failed to save tasks")
+			return
+		}
+
+		fmt.Printf("Deleted task %d:\n", id)
 	default:
+
 		fmt.Printf("Unknown command: %s\n", command)
 	}
 }
@@ -63,8 +107,7 @@ func addTask(tasks []Task, text string) []Task {
 func completeTask(tasks []Task, id int) []Task {
 
 	for i := 0; i < len(tasks); i++ {
-		task := tasks[i]
-		if task.ID == id {
+		if tasks[i].ID == id {
 
 			tasks[i].Done = true
 			return tasks
@@ -95,7 +138,9 @@ func saveTasks(tasks []Task) error {
 		return err
 	}
 
-	os.WriteFile("tasks.json", data, 0644)
+	if err := os.WriteFile("tasks.json", data, 0644); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -112,7 +157,19 @@ func loadTasks() ([]Task, error) {
 		return nil, err
 	}
 
-	json.Unmarshal(data, &loaded)
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		return nil, err
+	}
 
 	return loaded, nil
+}
+
+func deleteTask(tasks []Task, id int) []Task {
+	for i := 0; i < len(tasks); i++ {
+		if tasks[i].ID == id {
+			return append(tasks[:i], tasks[i+1:]...)
+		}
+	}
+
+	return tasks
 }
