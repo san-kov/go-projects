@@ -1,35 +1,22 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"url-shortener/models"
+	"net/http"
+	"url-shortener/handler"
 	"url-shortener/storage"
 )
 
 func main() {
-	e1 := models.NewURLEntry("abc1", "https://google.com")
-	e2 := models.NewURLEntry("abc2", "https://twitter.com")
-	e3 := models.NewURLEntry("abc3", "https://youtube.com")
-
 	s := storage.NewMemoryStorage()
+	h := handler.NewHandler(s)
 
-	s.Save(e1)
-	s.Save(e2)
-	s.Save(e3)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /shorten", h.Shorten)
+	mux.HandleFunc("GET /{code}", h.Redirect)
+	mux.HandleFunc("GET /stats/{code}", h.Stats)
 
-	err := s.Save(e3)
-
-	if errors.Is(err, storage.ErrAlreadyExists) {
-		fmt.Println("already exists")
-	}
-
-	_, err2 := s.Get("qwe")
-	if errors.Is(err2, storage.ErrNotFound) {
-		fmt.Println("not found")
-	}
-
-	printAll(s)
+	http.ListenAndServe(":8080", mux)
 }
 
 func printAll(s storage.Storage) {
