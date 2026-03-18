@@ -8,20 +8,19 @@ import (
 
 var ErrNotFound = errors.New("not found")
 var ErrAlreadyExists = errors.New("already exists")
-
-type URLEntry = models.URLEntry
+var _ Storage = (*MemoryStorage)(nil)
 
 type MemoryStorage struct {
-	entries map[string]*URLEntry
+	entries map[string]*models.URLEntry
 }
 
 type Storage interface {
-	Save(entry *URLEntry) error
-	Get(code string) (*URLEntry, error)
-	All() []*URLEntry
+	Save(entry *models.URLEntry) error
+	Get(code string) (*models.URLEntry, error)
+	All() []*models.URLEntry
 }
 
-func (m *MemoryStorage) Save(entry *URLEntry) error {
+func (m *MemoryStorage) Save(entry *models.URLEntry) error {
 	if _, exists := m.entries[entry.Code]; exists {
 		return fmt.Errorf("storage.save %q: %w", entry.Code, ErrAlreadyExists)
 	}
@@ -31,7 +30,7 @@ func (m *MemoryStorage) Save(entry *URLEntry) error {
 	return nil
 }
 
-func (m *MemoryStorage) Get(code string) (*URLEntry, error) {
+func (m *MemoryStorage) Get(code string) (*models.URLEntry, error) {
 	val, ok := m.entries[code]
 
 	if !ok {
@@ -41,8 +40,8 @@ func (m *MemoryStorage) Get(code string) (*URLEntry, error) {
 	return val, nil
 }
 
-func (m *MemoryStorage) All() []*URLEntry {
-	var entries []*URLEntry
+func (m *MemoryStorage) All() []*models.URLEntry {
+	var entries []*models.URLEntry
 
 	for _, entry := range m.entries {
 		entries = append(entries, entry)
@@ -53,6 +52,6 @@ func (m *MemoryStorage) All() []*URLEntry {
 
 func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
-		entries: make(map[string]*URLEntry),
+		entries: make(map[string]*models.URLEntry),
 	}
 }

@@ -18,8 +18,6 @@ func main() {
 	s.Save(e2)
 	s.Save(e3)
 
-	var _ storage.Storage = (*storage.MemoryStorage)(nil)
-
 	err := s.Save(e3)
 
 	if errors.Is(err, storage.ErrAlreadyExists) {
